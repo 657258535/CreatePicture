@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文字图片生成器</title>
+  <!-- 引入Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义颜色和字体 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F46E5',
+            secondary: '#10B981',
+            neutral: '#64748B',
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .color-option {
+        @apply w-8 h-8 rounded-full cursor-pointer transition-transform hover:scale-110 border-2 border-transparent hover:border-gray-400;
+      }
+      .font-option {
+        @apply py-2 px-3 rounded-md cursor-pointer transition-all hover:bg-primary/10 active:bg-primary/20;
+      }
+      .input-field {
+        @apply w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all;
+      }
+      /* 为背景色和文字色选项添加不同的容器类 */
+      .bg-color-options {
+        @apply mb-5;
+      }
+      .text-color-options {
+        @apply mb-6;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-inter text-gray-800 min-h-screen">
+  <div class="container mx-auto px-4 py-8 max-w-6xl">
+    <!-- 页面标题 -->
+    <header class="text-center mb-10">
+      <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-gray-800 mb-2">文字图片生成器</h1>
+      <p class="text-gray-600 max-w-2xl mx-auto">自定义文字内容、尺寸、边距和样式，一键生成并下载图片</p>
+    </header>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- 左侧：控制面板 -->
+      <div class="lg:col-span-1 bg-white rounded-xl shadow-md p-6 order-2 lg:order-1">
+        <h2 class="text-xl font-semibold mb-5 flex items-center">
+          <i class="fa fa-sliders mr-2 text-primary"></i> 图片设置
+        </h2>
+        
+        <!-- 文字内容输入 -->
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-gray-700 mb-1">文字内容</label>
+          <textarea id="text-input" class="input-field h-24 resize-none" placeholder="请输入要显示的文字...">示例文字</textarea>
+        </div>
+        
+        <!-- 文字大小设置 -->
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-gray-700 mb-1">文字大小 (像素)</label>
+          <input type="number" id="font-size-input" class="input-field" value="24" min="6" max="100">
+        </div>
+        
+        <!-- 尺寸设置 -->
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-gray-700 mb-1">图片尺寸 (像素)</label>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">宽度</label>
+              <input type="number" id="width-input" class="input-field" value="600" min="100" max="2000">
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">高度</label>
+              <input type="number" id="height-input" class="input-field" value="400" min="100" max="2000">
+            </div>
+          </div>
+        </div>
+        
+        <!-- 圆角设置 -->
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-gray-700 mb-1">圆角半径 (像素)</label>
+          <input type="number" id="border-radius-input" class="input-field" value="10" min="0" max="100">
+          <p class="text-xs text-gray-500 mt-1">0为直角，数值越大圆角越明显</p>
+        </div>
+        
+        <!-- 边距设置 - 可控制四个方向的padding -->
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-gray-700 mb-2">内边距 (像素)</label>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">上</label>
+              <input type="number" id="padding-top" class="input-field" value="20" min="0" max="200">
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">右</label>
+              <input type="number" id="padding-right" class="input-field" value="20" min="0" max="200">
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">下</label>
+              <input type="number" id="padding-bottom" class="input-field" value="20" min="0" max="200">
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">左</label>
+              <input type="number" id="padding-left" class="input-field" value="20" min="0" max="200">
+            </div>
+          </div>
+          <div class="mt-2 flex gap-2">
+            <button id="reset-padding" class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+              重置为相同值
+            </button>
+          </div>
+        </div>
+        
+        <!-- 字体选择 -->
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-gray-700 mb-1">字体选择</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 border border-gray-200 rounded-md">
+            <div class="font-option" data-font="Arial, sans-serif">Arial</div>
+            <div class="font-option" data-font="'Times New Roman', serif">Times New Roman</div>
+            <div class="font-option" data-font="'Courier New', monospace">Courier New</div>
+            <div class="font-option" data-font="Georgia, serif">Georgia</div>
+            <div class="font-option" data-font="Verdana, sans-serif">Verdana</div>
+            <div class="font-option" data-font="'Microsoft YaHei', sans-serif">微软雅黑</div>
+            <div class="font-option" data-font="'SimSun', serif">宋体</div>
+            <div class="font-option" data-font="'SimHei', sans-serif">黑体</div>
+            <div class="font-option" data-font="'KaiTi', serif">楷体</div>
+          </div>
+          <input type="hidden" id="font-select" value="Arial, sans-serif">
+        </div>
+        
+        <!-- 背景颜色选择 -->
+        <div class="bg-color-options">
+          <label class="block text-sm font-medium text-gray-700 mb-2">背景颜色</label>
+          <div class="flex flex-wrap gap-2">
+            <div class="color-option" data-color="transparent" style="background: transparent; border: 2px dashed #999;"></div>
+            <div class="color-option" data-color="#ffffff" style="background-color: #ffffff; border: 1px solid #ddd;"></div>
+            <div class="color-option" data-color="#f8fafc" style="background-color: #f8fafc;"></div>
+            <div class="color-option" data-color="#ef4444" style="background-color: #ef4444;"></div>
+            <div class="color-option" data-color="#f97316" style="background-color: #f97316;"></div>
+            <div class="color-option" data-color="#eab308" style="background-color: #eab308;"></div>
+            <div class="color-option" data-color="#22c55e" style="background-color: #22c55e;"></div>
+            <div class="color-option" data-color="#0ea5e9" style="background-color: #0ea5e9;"></div>
+            <div class="color-option" data-color="#3b82f6" style="background-color: #3b82f6;"></div>
+            <div class="color-option" data-color="#8b5cf6" style="background-color: #8b5cf6;"></div>
+            <div class="color-option" data-color="#ec4899" style="background-color: #ec4899;"></div>
+            <div class="color-option" data-color="#64748b" style="background-color: #64748b;"></div>
+            <div class="color-option" data-color="#1e293b" style="background-color: #1e293b;"></div>
+          </div>
+          <input type="hidden" id="bg-color" value="transparent">
+        </div>
+        
+        <!-- 字体颜色选择 -->
+        <div class="text-color-options">
+          <label class="block text-sm font-medium text-gray-700 mb-2">文字颜色</label>
+          <div class="flex flex-wrap gap-2">
+            <div class="color-option" data-color="#000000" style="background-color: #000000;"></div>
+            <div class="color-option" data-color="#ffffff" style="background-color: #ffffff; border: 1px solid #ddd;"></div>
+            <div class="color-option" data-color="#ef4444" style="background-color: #ef4444;"></div>
+            <div class="color-option" data-color="#f97316" style="background-color: #f97316;"></div>
+            <div class="color-option" data-color="#eab308" style="background-color: #eab308;"></div>
+            <div class="color-option" data-color="#22c55e" style="background-color: #22c55e;"></div>
+            <div class="color-option" data-color="#0ea5e9" style="background-color: #0ea5e9;"></div>
+            <div class="color-option" data-color="#3b82f6" style="background-color: #3b82f6;"></div>
+            <div class="color-option" data-color="#8b5cf6" style="background-color: #8b5cf6;"></div>
+            <div class="color-option" data-color="#ec4899" style="background-color: #ec4899;"></div>
+            <div class="color-option" data-color="#64748b" style="background-color: #64748b;"></div>
+            <div class="color-option" data-color="#1e293b" style="background-color: #1e293b;"></div>
+          </div>
+          <input type="hidden" id="text-color" value="#000000">
+        </div>
+        
+        <!-- 下载按钮 -->
+        <button id="download-btn" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-4 rounded-md transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center">
+          <i class="fa fa-download mr-2"></i> 下载图片
+        </button>
+      </div>
+      
+      <!-- 右侧：预览区域 -->
+      <div class="lg:col-span-2 order-1 lg:order-2">
+        <div class="bg-white rounded-xl shadow-md p-6 h-full flex flex-col">
+          <h2 class="text-xl font-semibold mb-5 flex items-center">
+            <i class="fa fa-eye mr-2 text-primary"></i> 预览效果
+          </h2>
+          
+          <div class="flex-1 flex items-center justify-center p-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+            <div id="preview-container" class="relative w-full h-full flex items-center justify-center">
+              <canvas id="preview-canvas" class="max-w-full max-h-[500px] shadow-lg"></canvas>
+            </div>
+          </div>
+          
+          <div class="mt-4 text-sm text-gray-500 text-center">
+            提示：修改左侧设置，实时预览效果
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 页脚 -->
+    <footer class="mt-12 text-center text-gray-500 text-sm">
+      <p>文字图片生成器 &copy; 2023 | 轻松创建自定义文字图片</p>
+    </footer>
+  </div>
+
+  <script>
+    // 获取DOM元素
+    const textInput = document.getElementById('text-input');
+    const widthInput = document.getElementById('width-input');
+    const heightInput = document.getElementById('height-input');
+    const borderRadiusInput = document.getElementById('border-radius-input');
+    const paddingTop = document.getElementById('padding-top');
+    const paddingRight = document.getElementById('padding-right');
+    const paddingBottom = document.getElementById('padding-bottom');
+    const paddingLeft = document.getElementById('padding-left');
+    const resetPaddingBtn = document.getElementById('reset-padding');
+    const fontSizeInput = document.getElementById('font-size-input');
+    const fontSelect = document.getElementById('font-select');
+    const bgColorInput = document.getElementById('bg-color');
+    const textColorInput = document.getElementById('text-color');
+    const fontOptions = document.querySelectorAll('.font-option');
+    const bgColorOptions = document.querySelectorAll('.bg-color-options .color-option');
+    const textColorOptions = document.querySelectorAll('.text-color-options .color-option');
+    const canvas = document.getElementById('preview-canvas');
+    const ctx = canvas.getContext('2d');
+    const downloadBtn = document.getElementById('download-btn');
+    
+    // 初始化选中状态
+    fontOptions[0].classList.add('bg-primary/20', 'font-medium');
+    document.querySelector(`.bg-color-options .color-option[data-color="${bgColorInput.value}"]`).classList.add('border-primary');
+    document.querySelector(`.text-color-options .color-option[data-color="${textColorInput.value}"]`).classList.add('border-primary');
+    
+    // 从本地存储加载配置
+    function loadFromLocalStorage() {
+      const savedConfig = localStorage.getItem('textImageConfig');
+      if (savedConfig) {
+        const config = JSON.parse(savedConfig);
+        textInput.value = config.text || textInput.value;
+        widthInput.value = config.width || widthInput.value;
+        heightInput.value = config.height || heightInput.value;
+        borderRadiusInput.value = config.borderRadius || borderRadiusInput.value;
+        paddingTop.value = config.paddingTop || paddingTop.value;
+        paddingRight.value = config.paddingRight || paddingRight.value;
+        paddingBottom.value = config.paddingBottom || paddingBottom.value;
+        paddingLeft.value = config.paddingLeft || paddingLeft.value;
+        fontSizeInput.value = config.fontSize || fontSizeInput.value;
+        fontSelect.value = config.font || fontSelect.value;
+        bgColorInput.value = config.bgColor || bgColorInput.value;
+        textColorInput.value = config.textColor || textColorInput.value;
+        
+        updateUISelection();
+      }
+    }
+    
+    // 保存配置到本地存储
+    function saveToLocalStorage() {
+      const config = {
+        text: textInput.value,
+        width: widthInput.value,
+        height: heightInput.value,
+        borderRadius: borderRadiusInput.value,
+        paddingTop: paddingTop.value,
+        paddingRight: paddingRight.value,
+        paddingBottom: paddingBottom.value,
+        paddingLeft: paddingLeft.value,
+        fontSize: fontSizeInput.value,
+        font: fontSelect.value,
+        bgColor: bgColorInput.value,
+        textColor: textColorInput.value
+      };
+      localStorage.setItem('textImageConfig', JSON.stringify(config));
+    }
+    
+    // 更新UI选中状态
+    function updateUISelection() {
+      // 更新字体选中状态
+      fontOptions.forEach(opt => opt.classList.remove('bg-primary/20', 'font-medium'));
+      const activeFont = Array.from(fontOptions).find(opt => opt.getAttribute('data-font') === fontSelect.value);
+      if (activeFont) activeFont.classList.add('bg-primary/20', 'font-medium');
+      
+      // 更新背景颜色选中状态
+      bgColorOptions.forEach(opt => opt.classList.remove('border-primary'));
+      const activeBgColor = document.querySelector(`.bg-color-options .color-option[data-color="${bgColorInput.value}"]`);
+      if (activeBgColor) activeBgColor.classList.add('border-primary');
+      
+      // 更新文字颜色选中状态
+      textColorOptions.forEach(opt => opt.classList.remove('border-primary'));
+      const activeTextColor = document.querySelector(`.text-color-options .color-option[data-color="${textColorInput.value}"]`);
+      if (activeTextColor) activeTextColor.classList.add('border-primary');
+    }
+    
+    // 字体选择事件
+    fontOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        fontOptions.forEach(opt => opt.classList.remove('bg-primary/20', 'font-medium'));
+        option.classList.add('bg-primary/20', 'font-medium');
+        fontSelect.value = option.getAttribute('data-font');
+        saveToLocalStorage();
+        updatePreview();
+      });
+    });
+    
+    // 背景颜色选择事件
+    bgColorOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        const color = option.getAttribute('data-color');
+        bgColorOptions.forEach(opt => opt.classList.remove('border-primary'));
+        option.classList.add('border-primary');
+        bgColorInput.value = color;
+        saveToLocalStorage();
+        updatePreview();
+      });
+    });
+    
+    // 文字颜色选择事件
+    textColorOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        const color = option.getAttribute('data-color');
+        textColorOptions.forEach(opt => opt.classList.remove('border-primary'));
+        option.classList.add('border-primary');
+        textColorInput.value = color;
+        saveToLocalStorage();
+        updatePreview();
+      });
+    });
+    
+    // 输入事件监听
+    textInput.addEventListener('input', () => {
+      saveToLocalStorage();
+      updatePreview();
+    });
+    widthInput.addEventListener('input', () => {
+      saveToLocalStorage();
+      updatePreview();
+    });
+    heightInput.addEventListener('input', () => {
+      saveToLocalStorage();
+      updatePreview();
+    });
+    borderRadiusInput.addEventListener('input', () => {
+      saveToLocalStorage();
+      updatePreview();
+    });
+    paddingTop.addEventListener('input', () => {
+      saveToLocalStorage();
+      updatePreview();
+    });
+    paddingRight.addEventListener('input', () => {
+      saveToLocalStorage();
+      updatePreview();
+    });
+    paddingBottom.addEventListener('input', () => {
+      saveToLocalStorage();
+      updatePreview();
+    });
+    paddingLeft.addEventListener('input', () => {
+      saveToLocalStorage();
+      updatePreview();
+    });
+    fontSizeInput.addEventListener('input', () => {
+      saveToLocalStorage();
+      updatePreview();
+    });
+    
+    // 重置padding为相同值
+    resetPaddingBtn.addEventListener('click', () => {
+      const value = paddingTop.value;
+      paddingRight.value = value;
+      paddingBottom.value = value;
+      paddingLeft.value = value;
+      saveToLocalStorage();
+      updatePreview();
+    });
+    
+    // 更新预览
+    function updatePreview() {
+      const text = textInput.value || '请输入文字';
+      const width = parseInt(widthInput.value) || 600;
+      const height = parseInt(heightInput.value) || 400;
+      const borderRadius = parseInt(borderRadiusInput.value) || 0;
+      const pt = parseInt(paddingTop.value) || 0;
+      const pr = parseInt(paddingRight.value) || 0;
+      const pb = parseInt(paddingBottom.value) || 0;
+      const pl = parseInt(paddingLeft.value) || 0;
+      const fontSize = parseInt(fontSizeInput.value) || 24;
+      const font = fontSelect.value;
+      const bgColor = bgColorInput.value;
+      const textColor = textColorInput.value;
+      
+      // 设置canvas尺寸
+      canvas.width = width;
+      canvas.height = height;
+      
+      // 清除画布（使用透明色）
+      ctx.clearRect(0, 0, width, height);
+      
+      // 绘制带圆角的背景
+      if (bgColor !== 'transparent') {
+        ctx.fillStyle = bgColor;
+        // 绘制圆角矩形 - 修复了绘制逻辑
+        ctx.beginPath();
+        // 确保圆角半径不会超过画布的一半
+        const radius = Math.min(borderRadius, width / 2, height / 2);
+        
+        ctx.moveTo(radius, 0);
+        ctx.lineTo(width - radius, 0);
+        ctx.arcTo(width, 0, width, radius, radius);
+        ctx.lineTo(width, height - radius);
+        ctx.arcTo(width, height, width - radius, height, radius);
+        ctx.lineTo(radius, height);
+        ctx.arcTo(0, height, 0, height - radius, radius);
+        ctx.lineTo(0, radius);
+        ctx.arcTo(0, 0, radius, 0, radius);
+        ctx.closePath();
+        ctx.fill();
+      }
+      
+      // 设置文字样式
+      ctx.fillStyle = textColor;
+      ctx.font = `bold ${fontSize}px ${font}`;
+      
+      // 计算文本区域的最大宽度和高度
+      const maxWidth = width - pl - pr;
+      const maxHeight = height - pt - pb;
+      
+      // 分割文本为多行
+      let lines = wrapText(ctx, text, maxWidth);
+      
+      // 计算行高和总文本高度
+      const lineHeight = fontSize * 1.2;
+      let totalTextHeight = lines.length * lineHeight;
+      
+      // 计算文本起始位置（居中显示）
+      const startY = pt + (maxHeight - totalTextHeight) / 2 + fontSize;
+      
+      // 绘制文本
+      lines.forEach((line, index) => {
+        const textWidth = ctx.measureText(line).width;
+        const x = pl + (maxWidth - textWidth) / 2;
+        const y = startY + index * lineHeight;
+        ctx.fillText(line, x, y);
+      });
+    }
+    
+    // 文本换行函数
+    function wrapText(ctx, text, maxWidth) {
+      const words = text.split(' ');
+      const lines = [];
+      let currentLine = words[0];
+      
+      for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = ctx.measureText(currentLine + ' ' + word).width;
+        if (width < maxWidth) {
+          currentLine += ' ' + word;
+        } else {
+          lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      
+      lines.push(currentLine);
+      return lines;
+    }
+    
+    // 下载图片
+    downloadBtn.addEventListener('click', () => {
+      try {
+        const link = document.createElement('a');
+        canvas.toBlob(blob => {
+          const url = URL.createObjectURL(blob);
+          link.href = url;
+          const filename = `text-image-${new Date().getTime()}.png`;
+          link.download = filename;
+          link.click();
+          URL.revokeObjectURL(url);
+          
+          downloadBtn.innerHTML = '<i class="fa fa-check mr-2"></i> 下载成功';
+          downloadBtn.classList.remove('bg-primary');
+          downloadBtn.classList.add('bg-secondary');
+          
+          setTimeout(() => {
+            downloadBtn.innerHTML = '<i class="fa fa-download mr-2"></i> 下载图片';
+            downloadBtn.classList.remove('bg-secondary');
+            downloadBtn.classList.add('bg-primary');
+          }, 2000);
+        });
+      } catch (error) {
+        alert('下载失败，请重试');
+        console.error('下载失败:', error);
+      }
+    });
+    
+    // 初始化
+    window.addEventListener('load', () => {
+      loadFromLocalStorage();
+      updatePreview();
+    });
+  </script>
+</body>
+</html>
